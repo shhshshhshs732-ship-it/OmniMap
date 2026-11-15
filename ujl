@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>OmniMap</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      color: #111827;
+      background-color: #F3F4F6;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    header {
+      min-height: 56px;
+      background-color: #FFFFFF;
+      border-bottom: 1px solid #D1D5DB;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      gap: 8px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.02em;
+      cursor: pointer;
+    }
+
+    .current-map-title {
+      font-size: 14px;
+      color: #6B7280;
+      border-left: 1px solid #D1D5DB;
+      padding-left: 10px;
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-badge {
+      font-size: 13px;
+      font-weight: 500;
+      color: #111827;
+      background-color: #F3F4F6;
+      border: 1px solid #D1D5DB;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border: 1px solid #D1D5DB;
+      background-color: #FFFFFF;
+      color: #111827;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background-color: #F3F4F6;
+    }
+
+    button.active {
+      background-color: #F3F4F6;
+      border-color: #111827;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background-color: #111827;
+      color: #FFFFFF;
+      border-color: #111827;
+    }
+
+    button.primary:hover {
+      opacity: 0.9;
+    }
+
+    /* Экран входа и регистрации */
+    #auth-view {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .auth-card {
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 380px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid #D1D5DB;
+      gap: 16px;
+    }
+
+    .auth-tab {
+      padding: 8px 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #6B7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .auth-tab.active {
+      color: #111827;
+      border-bottom-color: #111827;
+    }
+
+    .auth-error {
+      font-size: 13px;
+      color: #991B1B;
+      background-color: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      padding: 8px 10px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    /* Экран списка карт */
+    #list-view {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 16px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .list-container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .list-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .maps-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .map-card {
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      gap: 12px;
+    }
+
+    .map-card:hover {
+      border-color: #111827;
+    }
+
+    .map-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .map-card-name {
+      font-size: 16px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .map-card-meta {
+      font-size: 13px;
+      color: #6B7280;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      color: #6B7280;
+      font-size: 14px;
+    }
+
+    /* Бесконечный холст редактора */
+    #editor-view {
+      display: none;
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #F3F4F6;
+      background-image: radial-gradient(#D1D5DB 1px, transparent 1px);
+      background-size: 24px 24px;
+      overflow: hidden;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    #editor-view:active {
+      cursor: grabbing;
+    }
+
+    #world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    #edges-layer {
+      position: absolute;
+      top: -50000px;
+      left: -50000px;
+      width: 100000px;
+      height: 100000px;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .edge-visible {
+      stroke: #6B7280;
+      stroke-width: 1.5;
+      fill: none;
+      pointer-events: none;
+    }
+
+    .edge-hit {
+      stroke: transparent;
+      stroke-width: 18;
+      fill: none;
+      cursor: default;
+      pointer-events: stroke;
+    }
+
+    #editor-view.delete-mode .edge-hit {
+      cursor: pointer;
+    }
+
+    #editor-view.delete-mode .edge-hit:hover + .edge-visible {
+      stroke: #111827;
+      stroke-width: 3;
+    }
+
+    #nodes-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .node-card {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: system-ui, Arial, sans-serif;
+      color: #111827;
+      cursor: grab;
+      min-width: 90px;
+      max-width: 240px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+
+    .node-card:active {
+      cursor: grabbing;
+    }
+
+    .node-card.connect-source {
+      outline: 2px solid #111827;
+      outline-offset: 2px;
+    }
+
+    /* Формы узлов */
+    .shape-rect { border-radius: 4px; }
+    .shape-pill { border-radius: 999px; padding: 10px 20px; }
+    .shape-sharp { border-radius: 0px; }
+    .shape-accent { border-radius: 4px; border-left-width: 5px; }
+    .shape-double { border-radius: 4px; border-style: double; border-width: 3px; }
+    .shape-dashed { border-radius: 4px; border-style: dashed; border-width: 1.5px; }
+
+    /* Шрифты узлов */
+    .font-sans { font-family: system-ui, Arial, sans-serif; }
+    .font-serif { font-family: Georgia, 'Times New Roman', serif; }
+    .font-mono { font-family: 'Courier New', monospace; font-size: 13px; }
+    .font-bold { font-family: system-ui, Arial, sans-serif; font-weight: 700; }
+    .font-italic { font-family: Georgia, serif; font-style: italic; }
+    .font-caps { font-family: system-ui, Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* Элементы управления холстом */
+    .zoom-controls {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      display: flex;
+      gap: 4px;
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 4px;
+      padding: 4px;
+      z-index: 15;
+    }
+
+    .zoom-controls button {
+      border: none;
+      padding: 4px 10px;
+      font-size: 14px;
+    }
+
+    .hint-banner {
+      display: none;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #FFFFFF;
+      border: 1px solid #111827;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      z-index: 15;
+      white-space: nowrap;
+    }
+
+    /* Модальные окна */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(17, 24, 39, 0.25);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 460px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6B7280;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .option-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .option-btn {
+      padding: 6px 6px;
+      font-size: 12px;
+      text-align: center;
+      border: 1px solid #D1D5DB;
+      background-color: #FFFFFF;
+      color: #111827;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .option-btn.selected {
+      border-color: #111827;
+      background-color: #F3F4F6;
+      font-weight: 600;
+    }
+
+    .color-palette {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+    }
+
+    .color-swatch {
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid #D1D5DB;
+      cursor: pointer;
+    }
+
+    .color-swatch.selected {
+      outline: 2px solid #111827;
+      outline-offset: 1px;
+    }
+
+    input[type="text"], input[type="password"], textarea {
+      width: 100%;
+      padding: 9px 10px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #111827;
+      background-color: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+      border-color: #111827;
+    }
+
+    textarea {
+      height: 110px;
+      resize: vertical;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <div class="logo" id="logo-btn">OmniMap</div>
+      <div class="current-map-title" id="header-map-name" style="display: none;"></div>
+    </div>
+    <div class="toolbar" id="auth-toolbar"></div>
+    <div class="toolbar" id="list-toolbar" style="display: none;">
+      <span class="user-badge" id="user-badge-name"></span>
+      <button id="btn-new-map" class="primary">+ Новая карта</button>
+      <button id="btn-logout">Выйти</button>
+    </div>
+    <div class="toolbar" id="editor-toolbar" style="display: none;">
+      <button id="btn-back">← К списку</button>
+      <button id="btn-add">+ Узел</button>
+      <button id="btn-connect">Соединить</button>
+      <button id="btn-delete">Удалить</button>
+      <button id="btn-save" class="primary">Сохранить</button>
+    </div>
+  </header>
+
+  <!-- Экран входа и регистрации -->
+  <div id="auth-view">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login">Вход</div>
+        <div class="auth-tab" id="tab-register">Регистрация</div>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <div>
+        <label class="field-label">Логин</label>
+        <input type="text" id="auth-login" placeholder="Введите логин" autocomplete="username">
+      </div>
+      <div>
+        <label class="field-label">Пароль</label>
+        <input type="password" id="auth-password" placeholder="Введите пароль" autocomplete="current-password">
+      </div>
+      <button id="btn-auth-submit" class="primary" style="width: 100%; padding: 9px;">Войти</button>
+    </div>
+  </div>
+
+  <!-- Экран списка карт -->
+  <div id="list-view">
+    <div class="list-container">
+      <div class="list-header">
+        <div class="list-title">Мои ментальные карты</div>
+      </div>
+      <div class="maps-grid" id="maps-grid">
+        <div class="empty-state">Загрузка данных...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экран редактора с бесконечным холстом -->
+  <div id="editor-view">
+    <div class="hint-banner" id="hint-banner"></div>
+    <div id="world">
+      <svg id="edges-layer"></svg>
+      <div id="nodes-layer"></div>
+    </div>
+    <div class="zoom-controls">
+      <button id="btn-zoom-out" title="Отдалить">−</button>
+      <button id="btn-zoom-reset" title="Сбросить масштаб">100%</button>
+      <button id="btn-zoom-in" title="Приблизить">+</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно создания новой карты -->
+  <div class="modal-overlay" id="create-map-overlay">
+    <div class="modal-box">
+      <div class="modal-title">Новая ментальная карта</div>
+      <input type="text" id="new-map-input" placeholder="Название карты...">
+      <div class="modal-footer">
+        <button id="btn-cancel-map">Отмена</button>
+        <button id="btn-confirm-map" class="primary">Создать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно создания узла -->
+  <div class="modal-overlay" id="create-overlay">
+    <div class="modal-box">
+      <div class="modal-title">Новый узел</div>
+      <input type="text" id="new-node-input" placeholder="Введите название узла...">
+      <div class="modal-footer">
+        <button id="btn-cancel-create">Отмена</button>
+        <button id="btn-confirm-create" class="primary">Создать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно редактирования узла и оформления -->
+  <div class="modal-overlay" id="note-overlay">
+    <div class="modal-box">
+      <div class="modal-title">Настройка узла</div>
+      <div>
+        <label class="field-label">Название</label>
+        <input type="text" id="node-title-input" placeholder="Название узла...">
+      </div>
+      <div>
+        <label class="field-label">Форма карточки</label>
+        <div class="option-group" id="shape-options">
+          <button type="button" class="option-btn" data-val="rect">Прямоуг.</button>
+          <button type="button" class="option-btn" data-val="pill">Овал</button>
+          <button type="button" class="option-btn" data-val="sharp">Острый</button>
+          <button type="button" class="option-btn" data-val="accent">Блок</button>
+          <button type="button" class="option-btn" data-val="double">Двойной</button>
+          <button type="button" class="option-btn" data-val="dashed">Пунктир</button>
+        </div>
+      </div>
+      <div>
+        <label class="field-label">Шрифт</label>
+        <div class="option-group" id="font-options">
+          <button type="button" class="option-btn" data-val="sans">Обычный</button>
+          <button type="button" class="option-btn" data-val="serif">Книжный</button>
+          <button type="button" class="option-btn" data-val="mono">Код</button>
+          <button type="button" class="option-btn" data-val="bold">Жирный</button>
+          <button type="button" class="option-btn" data-val="italic">Курсив</button>
+          <button type="button" class="option-btn" data-val="caps">КАПС</button>
+        </div>
+      </div>
+      <div>
+        <label class="field-label">Цвет передника (фона)</label>
+        <div class="color-palette" id="bg-palette"></div>
+      </div>
+      <div>
+        <label class="field-label">Цвет рамки</label>
+        <div class="color-palette" id="border-palette"></div>
+      </div>
+      <div>
+        <label class="field-label">Цвет текста</label>
+        <div class="color-palette" id="text-palette"></div>
+      </div>
+      <div>
+        <label class="field-label">Заметка или формула</label>
+        <textarea id="note-textarea" placeholder="Введите заметки, определения или формулы..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-done-note" class="primary">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BIN_ID = '6aea24eaffd5d16053a351f1';
+    const MASTER_KEY = '$2a$10$26AmaTIVJ2l6EazDbFpe4u/XlH4e70kNVFtb2.vPTWpSTWb5g0wmO';
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    const STORAGE_KEY = 'omnimap_cloud_cache_v2';
+    const SESSION_KEY = 'omnimap_active_user';
+    const OFFSET = 50000;
+
+    const COLORS = [
+      '#FFFFFF', '#F3F4F6', '#E5E7EB', '#9CA3AF', '#4B5563', '#111827', '#000000', '#FEF3C7',
+      '#FDE68A', '#FECACA', '#FCA5A5', '#DBEAFE', '#93C5FD', '#D1FAE5', '#6EE7B7', '#EDE9FE'
+    ];
+
+    let appData = { users: [] };
+    let currentUser = null;
+    let currentMapId = null;
+    let authMode = 'login';
+
+    let mode = 'normal';
+    let connectSourceId = null;
+    let editingNodeId = null;
+
+    let editShape = 'rect';
+    let editFont = 'sans';
+    let editBgColor = '#FFFFFF';
+    let editBorderColor = '#D1D5DB';
+    let editTextColor = '#111827';
+
+    let panX = 0;
+    let panY = 0;
+    let scale = 1;
+    let isPanning = false;
+    let startPanX = 0;
+    let startPanY = 0;
+
+    let draggingNode = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let hasMoved = false;
+
+    const authView = document.getElementById('auth-view');
+    const listView = document.getElementById('list-view');
+    const editorView = document.getElementById('editor-view');
+    const authToolbar = document.getElementById('auth-toolbar');
+    const listToolbar = document.getElementById('list-toolbar');
+    const editorToolbar = document.getElementById('editor-toolbar');
+    const headerMapName = document.getElementById('header-map-name');
+    const userBadgeName = document.getElementById('user-badge-name');
+
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const authError = document.getElementById('auth-error');
+    const authLoginInput = document.getElementById('auth-login');
+    const authPasswordInput = document.getElementById('auth-password');
+    const btnAuthSubmit = document.getElementById('btn-auth-submit');
+
+    const mapsGrid = document.getElementById('maps-grid');
+    const world = document.getElementById('world');
+    const edgesLayer = document.getElementById('edges-layer');
+    const nodesLayer = document.getElementById('nodes-layer');
+    const hintBanner = document.getElementById('hint-banner');
+
+    function initPalettes() {
+      const setups = [
+        { id: 'bg-palette', getter: () => editBgColor, setter: (c) => { editBgColor = c; } },
+        { id: 'border-palette', getter: () => editBorderColor, setter: (c) => { editBorderColor = c; } },
+        { id: 'text-palette', getter: () => editTextColor, setter: (c) => { editTextColor = c; } }
+      ];
+
+      setups.forEach(cfg => {
+        const container = document.getElementById(cfg.id);
+        COLORS.forEach(hex => {
+          const swatch = document.createElement('div');
+          swatch.className = 'color-swatch';
+          swatch.style.backgroundColor = hex;
+          swatch.dataset.color = hex;
+          swatch.addEventListener('click', () => {
+            cfg.setter(hex);
+            syncPalettes();
+          });
+          container.appendChild(swatch);
+        });
+      });
+    }
+
+    function syncPalettes() {
+      document.querySelectorAll('#bg-palette .color-swatch').forEach(el => {
+        el.classList.toggle('selected', el.dataset.color === editBgColor);
+      });
+      document.querySelectorAll('#border-palette .color-swatch').forEach(el => {
+        el.classList.toggle('selected', el.dataset.color === editBorderColor);
+      });
+      document.querySelectorAll('#text-palette .color-swatch').forEach(el => {
+        el.classList.toggle('selected', el.dataset.color === editTextColor);
+      });
+    }
+
+    function getCurrentUserObj() {
+      return appData.users.find(u => u.login === currentUser) || null;
+    }
+
+    function getCurrentMap() {
+      const userObj = getCurrentUserObj();
+      if (!userObj) return null;
+      return userObj.maps.find(m => m.id === currentMapId) || null;
+    }
+
+    function extractRecord(raw) {
+      if (!raw || typeof raw !== 'object') return {};
+      if (raw.record && typeof raw.record === 'object') return raw.record;
+      return raw;
+    }
+
+    // Загрузка базы пользователей и карт из JSONBin.io
+    async function loadDatabase() {
+      let loadedRecord = null;
+
+      try {
+        const response = await fetch(`${API_URL}/latest`, {
+          method: 'GET',
+          cache: 'no-store',
+          headers: {
+            'X-Master-Key': MASTER_KEY
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          loadedRecord = extractRecord(data);
+        }
+      } catch (e) {}
+
+      if (!loadedRecord || (!Array.isArray(loadedRecord.users) && !Array.isArray(loadedRecord.maps) && !Array.isArray(loadedRecord.nodes))) {
+        try {
+          const cached = localStorage.getItem(STORAGE_KEY);
+          if (cached) {
+            loadedRecord = extractRecord(JSON.parse(cached));
+          }
+        } catch (e) {}
+      }
+
+      if (loadedRecord && Array.isArray(loadedRecord.users)) {
+        appData = { users: loadedRecord.users };
+      } else {
+        appData = { users: [] };
+        // Миграция старых карт без привязки к аккаунту в общий стартовый аккаунт "Гость"
+        let legacyMaps = [];
+        if (loadedRecord && Array.isArray(loadedRecord.maps)) {
+          legacyMaps = loadedRecord.maps;
+        } else if (loadedRecord && Array.isArray(loadedRecord.nodes) && loadedRecord.nodes.length > 0) {
+          legacyMaps = [{
+            id: 'map-default',
+            title: 'Основная карта',
+            nodes: loadedRecord.nodes,
+            edges: Array.isArray(loadedRecord.edges) ? loadedRecord.edges : []
+          }];
+        }
+        if (legacyMaps.length > 0) {
+          appData.users.push({
+            login: 'user',
+            password: '123',
+            maps: legacyMaps
+          });
+        }
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      } catch (e) {}
+    }
+
+    // Сохранение всей базы в JSONBin.io
+    async function saveDatabase(showSuccessAlert = true) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      } catch (e) {}
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': MASTER_KEY
+          },
+          body: JSON.stringify(appData)
+        });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        if (showSuccessAlert) alert('Карта сохранена');
+      } catch (e) {
+        if (showSuccessAlert) alert('Сохранено локально (ошибка связи с сервером)');
+      }
+    }
+
+    function showAuthError(msg) {
+      if (!msg) {
+        authError.style.display = 'none';
+        authError.textContent = '';
+      } else {
+        authError.style.display = 'block';
+        authError.textContent = msg;
+      }
+    }
+
+    function switchAuthTab(newMode) {
+      authMode = newMode;
+      showAuthError('');
+      tabLogin.classList.toggle('active', authMode === 'login');
+      tabRegister.classList.toggle('active', authMode === 'register');
+      btnAuthSubmit.textContent = authMode === 'login' ? 'Войти' : 'Создать аккаунт';
+    }
+
+    tabLogin.addEventListener('click', () => switchAuthTab('login'));
+    tabRegister.addEventListener('click', () => switchAuthTab('register'));
+
+    async function handleAuthSubmit() {
+      const login = authLoginInput.value.trim();
+      const password = authPasswordInput.value.trim();
+
+      if (!login || !password) {
+        showAuthError('Заполните логин и пароль');
+        return;
+      }
+
+      btnAuthSubmit.disabled = true;
+      btnAuthSubmit.textContent = 'Подождите...';
+
+      await loadDatabase();
+
+      if (authMode === 'login') {
+        const found = appData.users.find(u => u.login.toLowerCase() === login.toLowerCase() && u.password === password);
+        if (!found) {
+          showAuthError('Неверный логин или пароль');
+          btnAuthSubmit.disabled = false;
+          btnAuthSubmit.textContent = 'Войти';
+          return;
+        }
+        currentUser = found.login;
+      } else {
+        const exists = appData.users.some(u => u.login.toLowerCase() === login.toLowerCase());
+        if (exists) {
+          showAuthError('Такой логин уже занят');
+          btnAuthSubmit.disabled = false;
+          btnAuthSubmit.textContent = 'Создать аккаунт';
+          return;
+        }
+        const newUser = {
+          login: login,
+          password: password,
+          maps: [{
+            id: 'map-' + Date.now(),
+            title: 'Моя первая карта',
+            nodes: [{
+              id: 1,
+              label: 'Главная тема',
+              note: '',
+              shape: 'rect',
+              font: 'sans',
+              bgColor: '#FFFFFF',
+              borderColor: '#D1D5DB',
+              textColor: '#111827',
+              x: 0,
+              y: 0
+            }],
+            edges: []
+          }]
+        };
+        appData.users.push(newUser);
+        currentUser = newUser.login;
+        await saveDatabase(false);
+      }
+
+      try {
+        localStorage.setItem(SESSION_KEY, currentUser);
+      } catch (e) {}
+
+      btnAuthSubmit.disabled = false;
+      btnAuthSubmit.textContent = authMode === 'login' ? 'Войти' : 'Создать аккаунт';
+      authPasswordInput.value = '';
+      showListView();
+    }
+
+    btnAuthSubmit.addEventListener('click', handleAuthSubmit);
+    authPasswordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleAuthSubmit();
+    });
+
+    function showAuthView() {
+      currentUser = null;
+      currentMapId = null;
+      try {
+        localStorage.removeItem(SESSION_KEY);
+      } catch (e) {}
+
+      authView.style.display = 'flex';
+      listView.style.display = 'none';
+      editorView.style.display = 'none';
+
+      authToolbar.style.display = 'flex';
+      listToolbar.style.display = 'none';
+      editorToolbar.style.display = 'none';
+      headerMapName.style.display = 'none';
+      showAuthError('');
+    }
+
+    function showListView() {
+      if (!currentUser || !getCurrentUserObj()) {
+        showAuthView();
+        return;
+      }
+      currentMapId = null;
+      setMode('normal');
+
+      authView.style.display = 'none';
+      listView.style.display = 'flex';
+      editorView.style.display = 'none';
+
+      authToolbar.style.display = 'none';
+      listToolbar.style.display = 'flex';
+      editorToolbar.style.display = 'none';
+      headerMapName.style.display = 'none';
+
+      userBadgeName.textContent = currentUser;
+      renderMapsList();
+    }
+
+    function showEditorView(mapId) {
+      const userObj = getCurrentUserObj();
+      if (!userObj) return;
+      const map = userObj.maps.find(m => m.id === mapId);
+      if (!map) return;
+
+      currentMapId = mapId;
+      setMode('normal');
+
+      authView.style.display = 'none';
+      listView.style.display = 'none';
+      editorView.style.display = 'block';
+
+      authToolbar.style.display = 'none';
+      listToolbar.style.display = 'none';
+      editorToolbar.style.display = 'flex';
+
+      headerMapName.textContent = map.title;
+      headerMapName.style.display = 'block';
+
+      centerCameraOnNodes(map);
+      render();
+    }
+
+    function renderMapsList() {
+      const userObj = getCurrentUserObj();
+      mapsGrid.innerHTML = '';
+
+      if (!userObj || userObj.maps.length === 0) {
+        mapsGrid.innerHTML = '<div class="empty-state">У вас пока нет ментальных карт. Нажмите «+ Новая карта», чтобы начать.</div>';
+        return;
+      }
+
+      userObj.maps.forEach(map => {
+        const card = document.createElement('div');
+        card.className = 'map-card';
+
+        const info = document.createElement('div');
+        info.className = 'map-card-info';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'map-card-name';
+        nameEl.textContent = map.title;
+
+        const metaEl = document.createElement('div');
+        metaEl.className = 'map-card-meta';
+        metaEl.textContent = `Узлов: ${map.nodes.length}`;
+
+        info.appendChild(nameEl);
+        info.appendChild(metaEl);
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Удалить';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm(`Удалить карту «${map.title}»?`)) {
+            userObj.maps = userObj.maps.filter(m => m.id !== map.id);
+            renderMapsList();
+            saveDatabase(false);
+          }
+        });
+
+        card.appendChild(info);
+        card.appendChild(delBtn);
+
+        card.addEventListener('click', () => {
+          showEditorView(map.id);
+        });
+
+        mapsGrid.appendChild(card);
+      });
+    }
+
+    function applyTransform() {
+      world.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      const bgSize = 24 * scale;
+      editorView.style.backgroundSize = `${bgSize}px ${bgSize}px`;
+      editorView.style.backgroundPosition = `${panX}px ${panY}px`;
+    }
+
+    function centerCameraOnNodes(map) {
+      const rect = editorView.getBoundingClientRect();
+      const viewW = rect.width || window.innerWidth;
+      const viewH = rect.height || (window.innerHeight - 56);
+      scale = 1;
+
+      if (!map.nodes || map.nodes.length === 0) {
+        panX = viewW / 2;
+        panY = viewH / 2;
+      } else {
+        let sumX = 0;
+        let sumY = 0;
+        map.nodes.forEach(n => {
+          sumX += n.x;
+          sumY += n.y;
+        });
+        const avgX = sumX / map.nodes.length;
+        const avgY = sumY / map.nodes.length;
+        panX = viewW / 2 - avgX;
+        panY = viewH / 2 - avgY;
+      }
+      applyTransform();
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      connectSourceId = null;
+
+      document.getElementById('btn-connect').classList.toggle('active', mode === 'connect');
+      document.getElementById('btn-delete').classList.toggle('active', mode === 'delete');
+      editorView.classList.toggle('delete-mode', mode === 'delete');
+
+      if (mode === 'connect') {
+        hintBanner.textContent = 'Нажмите на первый узел, затем на второй';
+        hintBanner.style.display = 'block';
+      } else if (mode === 'delete') {
+        hintBanner.textContent = 'Нажмите на узел или линию связи, чтобы удалить';
+        hintBanner.style.display = 'block';
+      } else {
+        hintBanner.style.display = 'none';
+      }
+
+      if (currentMapId) render();
+    }
+
+    function render() {
+      const map = getCurrentMap();
+      if (!map) return;
+
+      edgesLayer.innerHTML = '';
+      map.edges.forEach((edge, index) => {
+        const fromNode = map.nodes.find(n => n.id === edge.from);
+        const toNode = map.nodes.find(n => n.id === edge.to);
+        if (fromNode && toNode) {
+          const x1 = fromNode.x + OFFSET;
+          const y1 = fromNode.y + OFFSET;
+          const x2 = toNode.x + OFFSET;
+          const y2 = toNode.y + OFFSET;
+
+          const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          hitLine.setAttribute('x1', x1);
+          hitLine.setAttribute('y1', y1);
+          hitLine.setAttribute('x2', x2);
+          hitLine.setAttribute('y2', y2);
+          hitLine.setAttribute('class', 'edge-hit');
+
+          hitLine.addEventListener('pointerdown', (e) => {
+            if (mode === 'delete') {
+              e.stopPropagation();
+            }
+          });
+
+          hitLine.addEventListener('click', (e) => {
+            if (mode === 'delete') {
+              e.stopPropagation();
+              map.edges.splice(index, 1);
+              render();
+            }
+          });
+
+          const visLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          visLine.setAttribute('x1', x1);
+          visLine.setAttribute('y1', y1);
+          visLine.setAttribute('x2', x2);
+          visLine.setAttribute('y2', y2);
+          visLine.setAttribute('class', 'edge-visible');
+
+          edgesLayer.appendChild(hitLine);
+          edgesLayer.appendChild(visLine);
+        }
+      });
+
+      nodesLayer.innerHTML = '';
+      map.nodes.forEach(node => {
+        const el = document.createElement('div');
+        const shapeClass = 'shape-' + (node.shape || 'rect');
+        const fontClass = 'font-' + (node.font || 'sans');
+
+        el.className = `node-card ${shapeClass} ${fontClass}`;
+        if (mode === 'connect' && connectSourceId === node.id) {
+          el.classList.add('connect-source');
+        }
+
+        el.style.backgroundColor = node.bgColor || '#FFFFFF';
+        el.style.borderColor = node.borderColor || '#D1D5DB';
+        el.style.color = node.textColor || '#111827';
+
+        el.textContent = node.label;
+        el.style.left = node.x + 'px';
+        el.style.top = node.y + 'px';
+
+        el.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          draggingNode = node;
+          hasMoved = false;
+          const rect = editorView.getBoundingClientRect();
+          const worldMouseX = (e.clientX - rect.left - panX) / scale;
+          const worldMouseY = (e.clientY - rect.top - panY) / scale;
+          dragOffsetX = worldMouseX - node.x;
+          dragOffsetY = worldMouseY - node.y;
+        });
+
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (hasMoved) return;
+
+          if (mode === 'delete') {
+            map.nodes = map.nodes.filter(n => n.id !== node.id);
+            map.edges = map.edges.filter(edge => edge.from !== node.id && edge.to !== node.id);
+            render();
+            return;
+          }
+
+          if (mode === 'connect') {
+            if (connectSourceId === null) {
+              connectSourceId = node.id;
+              hintBanner.textContent = 'Теперь нажмите на второй узел';
+              render();
+            } else {
+              if (connectSourceId !== node.id) {
+                const exists = map.edges.some(edge =>
+                  (edge.from === connectSourceId && edge.to === node.id) ||
+                  (edge.from === node.id && edge.to === connectSourceId)
+                );
+                if (!exists) {
+                  map.edges.push({ from: connectSourceId, to: node.id });
+                }
+              }
+              setMode('normal');
+            }
+            return;
+          }
+
+          openNoteModal(node);
+        });
+
+        nodesLayer.appendChild(el);
+      });
+    }
+
+    editorView.addEventListener('pointerdown', (e) => {
+      if (e.target === editorView || e.target === world || e.target === edgesLayer) {
+        isPanning = true;
+        startPanX = e.clientX - panX;
+        startPanY = e.clientY - panY;
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (draggingNode) {
+        hasMoved = true;
+        const rect = editorView.getBoundingClientRect();
+        const worldMouseX = (e.clientX - rect.left - panX) / scale;
+        const worldMouseY = (e.clientY - rect.top - panY) / scale;
+        draggingNode.x = worldMouseX - dragOffsetX;
+        draggingNode.y = worldMouseY - dragOffsetY;
+        render();
+      } else if (isPanning) {
+        panX = e.clientX - startPanX;
+        panY = e.clientY - startPanY;
+        applyTransform();
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      draggingNode = null;
+      isPanning = false;
+    });
+
+    editorView.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = editorView.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      const newScale = Math.min(Math.max(scale * zoomFactor, 0.25), 2.5);
+
+      panX = mouseX - (mouseX - panX) * (newScale / scale);
+      panY = mouseY - (mouseY - panY) * (newScale / scale);
+      scale = newScale;
+      applyTransform();
+    }, { passive: false });
+
+    function zoomByStep(factor) {
+      const rect = editorView.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const newScale = Math.min(Math.max(scale * factor, 0.25), 2.5);
+
+      panX = centerX - (centerX - panX) * (newScale / scale);
+      panY = centerY - (centerY - panY) * (newScale / scale);
+      scale = newScale;
+      applyTransform();
+    }
+
+    document.getElementById('btn-zoom-in').addEventListener('click', () => zoomByStep(1.2));
+    document.getElementById('btn-zoom-out').addEventListener('click', () => zoomByStep(0.8));
+    document.getElementById('btn-zoom-reset').addEventListener('click', () => {
+      const map = getCurrentMap();
+      if (map) centerCameraOnNodes(map);
+    });
+
+    const createMapOverlay = document.getElementById('create-map-overlay');
+    const newMapInput = document.getElementById('new-map-input');
+
+    document.getElementById('btn-new-map').addEventListener('click', () => {
+      newMapInput.value = '';
+      createMapOverlay.style.display = 'flex';
+      newMapInput.focus();
+    });
+
+    document.getElementById('btn-cancel-map').addEventListener('click', () => {
+      createMapOverlay.style.display = 'none';
+    });
+
+    function confirmCreateMap() {
+      const userObj = getCurrentUserObj();
+      if (!userObj) return;
+      const title = newMapInput.value.trim();
+      if (title) {
+        const newMap = {
+          id: 'map-' + Date.now(),
+          title: title,
+          nodes: [{
+            id: 1,
+            label: title,
+            note: '',
+            shape: 'rect',
+            font: 'sans',
+            bgColor: '#FFFFFF',
+            borderColor: '#D1D5DB',
+            textColor: '#111827',
+            x: 0,
+            y: 0
+          }],
+          edges: []
+        };
+        userObj.maps.push(newMap);
+        createMapOverlay.style.display = 'none';
+        saveDatabase(false);
+        showEditorView(newMap.id);
+      }
+    }
+
+    document.getElementById('btn-confirm-map').addEventListener('click', confirmCreateMap);
+    newMapInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmCreateMap();
+    });
+
+    document.getElementById('btn-back').addEventListener('click', showListView);
+    document.getElementById('logo-btn').addEventListener('click', () => {
+      if (currentUser) showListView();
+    });
+    document.getElementById('btn-logout').addEventListener('click', showAuthView);
+
+    const createOverlay = document.getElementById('create-overlay');
+    const newNodeInput = document.getElementById('new-node-input');
+
+    document.getElementById('btn-add').addEventListener('click', () => {
+      setMode('normal');
+      newNodeInput.value = '';
+      createOverlay.style.display = 'flex';
+      newNodeInput.focus();
+    });
+
+    document.getElementById('btn-cancel-create').addEventListener('click', () => {
+      createOverlay.style.display = 'none';
+    });
+
+    function confirmCreateNode() {
+      const map = getCurrentMap();
+      if (!map) return;
+      const text = newNodeInput.value.trim();
+      if (text) {
+        const rect = editorView.getBoundingClientRect();
+        const centerX = (rect.width / 2 - panX) / scale;
+        const centerY = (rect.height / 2 - panY) / scale;
+
+        map.nodes.push({
+          id: Date.now(),
+          label: text,
+          note: '',
+          shape: 'rect',
+          font: 'sans',
+          bgColor: '#FFFFFF',
+          borderColor: '#D1D5DB',
+          textColor: '#111827',
+          x: Math.round(centerX + (Math.random() * 40 - 20)),
+          y: Math.round(centerY + (Math.random() * 40 - 20))
+        });
+        createOverlay.style.display = 'none';
+        render();
+      }
+    }
+
+    document.getElementById('btn-confirm-create').addEventListener('click', confirmCreateNode);
+    newNodeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmCreateNode();
+    });
+
+    document.getElementById('btn-connect').addEventListener('click', () => {
+      setMode(mode === 'connect' ? 'normal' : 'connect');
+    });
+
+    document.getElementById('btn-delete').addEventListener('click', () => {
+      setMode(mode === 'delete' ? 'normal' : 'delete');
+    });
+
+    document.getElementById('btn-save').addEventListener('click', () => saveDatabase(true));
+
+    const noteOverlay = document.getElementById('note-overlay');
+    const nodeTitleInput = document.getElementById('node-title-input');
+    const noteTextarea = document.getElementById('note-textarea');
+
+    function syncStyleButtons() {
+      document.querySelectorAll('#shape-options .option-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.val === editShape);
+      });
+      document.querySelectorAll('#font-options .option-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.val === editFont);
+      });
+      syncPalettes();
+    }
+
+    document.querySelectorAll('#shape-options .option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        editShape = btn.dataset.val;
+        syncStyleButtons();
+      });
+    });
+
+    document.querySelectorAll('#font-options .option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        editFont = btn.dataset.val;
+        syncStyleButtons();
+      });
+    });
+
+    function openNoteModal(node) {
+      editingNodeId = node.id;
+      nodeTitleInput.value = node.label;
+      noteTextarea.value = node.note || '';
+      editShape = node.shape || 'rect';
+      editFont = node.font || 'sans';
+      editBgColor = node.bgColor || '#FFFFFF';
+      editBorderColor = node.borderColor || '#D1D5DB';
+      editTextColor = node.textColor || '#111827';
+      syncStyleButtons();
+      noteOverlay.style.display = 'flex';
+    }
+
+    function closeNoteModal() {
+      const map = getCurrentMap();
+      if (map && editingNodeId !== null) {
+        const node = map.nodes.find(n => n.id === editingNodeId);
+        if (node) {
+          const newTitle = nodeTitleInput.value.trim();
+          if (newTitle) node.label = newTitle;
+          node.shape = editShape;
+          node.font = editFont;
+          node.bgColor = editBgColor;
+          node.borderColor = editBorderColor;
+          node.textColor = editTextColor;
+          node.note = noteTextarea.value;
+        }
+      }
+      noteOverlay.style.display = 'none';
+      editingNodeId = null;
+      render();
+    }
+
+    document.getElementById('btn-done-note').addEventListener('click', closeNoteModal);
+    noteOverlay.addEventListener('click', (e) => {
+      if (e.target === noteOverlay) closeNoteModal();
+    });
+
+    async function initApp() {
+      initPalettes();
+      await loadDatabase();
+
+      let savedSession = null;
+      try {
+        savedSession = localStorage.getItem(SESSION_KEY);
+      } catch (e) {}
+
+      if (savedSession && appData.users.some(u => u.login === savedSession)) {
+        currentUser = savedSession;
+        showListView();
+      } else {
+        showAuthView();
+      }
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
